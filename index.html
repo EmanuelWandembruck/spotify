@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify - Web Player: Música para todos</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000000;
+            color: #ffffff;
+            user-select: none;
+        }
+
+        /* Custom Scrollbar for Spotify look */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Custom Range Input (Sliders for progress and volume) */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: #4d4d4d;
+            height: 4px;
+            border-radius: 2px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.1s ease-in-out;
+        }
+
+        .range-container:hover input[type="range"]::-webkit-slider-thumb {
+            opacity: 1;
+        }
+
+        .range-container:hover input[type="range"] {
+            background: #1db954;
+        }
+
+        /* Card Hover Animations */
+        .spotify-card {
+            transition: background-color 0.3s ease;
+        }
+        .spotify-card .play-btn {
+            opacity: 0;
+            transform: translateY(8px);
+            transition: all 0.3s ease;
+        }
+        .spotify-card:hover .play-btn {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Sticky Header Background Blur */
+        .sticky-header {
+            transition: background-color 0.3s ease;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden p-2 gap-2 bg-black">
+
+    <!-- Hidden Audio Element for Functional Playback -->
+    <audio id="main-audio"></audio>
+
+    <div class="flex-1 flex gap-2 overflow-hidden min-h-0">
+
+        <!-- ================= SIDEBAR (MENU LATERAL) ================= -->
+        <aside class="w-80 flex flex-col gap-2 shrink-0 hidden md:flex">
+            
+            <!-- Top Navigation Card -->
+            <div class="bg-[#121212] rounded-lg p-4 space-y-5">
+                <div class="flex items-center gap-2 px-2 text-white font-bold text-xl cursor-pointer">
+                    <i class="fa-brands fa-spotify text-3xl text-[#1DB954]"></i>
+                    <span>Spotify</span>
+                </div>
+                <nav class="space-y-4 font-semibold text-sm">
+                    <a href="#" class="flex items-center gap-4 text-white hover:text-white transition-colors px-2" id="nav-home">
+                        <i class="fa-solid fa-house text-xl"></i>
+                        <span>Início</span>
+                    </a>
+                    <a href="#" class="flex items-center gap-4 text-[#b3b3b3] hover:text-white transition-colors px-2" id="nav-search-btn">
+                        <i class="fa-solid fa-magnifying-glass text-xl"></i>
+                        <span>Buscar</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Library Panel -->
+            <div class="bg-[#121212] rounded-lg p-3 flex-1 flex flex-col min-h-0 overflow-hidden">
+                <!-- Library Header -->
+                <div class="flex items-center justify-between px-2 py-2 text-[#b3b3b3]">
+                    <button class="flex items-center gap-3 font-semibold text-sm hover:text-white transition-colors">
+                        <i class="fa-solid fa-book-bookmark text-xl"></i>
+                        <span>Sua Biblioteca</span>
+                    </button>
+                    <div class="flex items-center gap-3">
+                        <button class="hover:text-white hover:bg-[#1a1a1a] p-2 rounded-full transition-colors" title="Criar playlist ou pasta">
+                            <i class="fa-solid fa-plus text-lg"></i>
+                        </button>
+                        <button class="hover:text-white hover:bg-[#1a1a1a] p-2 rounded-full transition-colors" title="Mostrar mais">
+                            <i class="fa-solid fa-arrow-right text-lg"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quick Filters -->
+                <div class="flex items-center gap-2 px-2 my-3">
+                    <button class="bg-[#2a2a2a] hover:bg-[#333333] text-white text-xs font-medium px-3 py-1.5 rounded-full transition">Playlists</button>
+                    <button class="bg-[#2a2a2a] hover:bg-[#333333] text-white text-xs font-medium px-3 py-1.5 rounded-full transition">Artistas</button>
+                    <button class="bg-[#2a2a2a] hover:bg-[#333333] text-white text-xs font-medium px-3 py-1.5 rounded-full transition">Álbuns</button>
+                </div>
+
+                <!-- Library Search & Sort -->
+                <div class="flex items-center justify-between px-2 py-1 text-[#b3b3b3] text-xs">
+                    <button class="hover:text-white p-1 rounded-full"><i class="fa-solid fa-magnifying-glass"></i></button>
+                    <button class="flex items-center gap-1 hover:text-white transition">
+                        <span>Recentes</span>
+                        <i class="fa-solid fa-list-ul"></i>
+                    </button>
+                </div>
+
+                <!-- Scrollable Playlists / Artists List -->
+                <div class="flex-1 overflow-y-auto space-y-1 mt-2 pr-1" id="sidebar-playlist-container">
+                    
+                    <!-- Liked Songs Row -->
+                    <div class="flex items-center gap-3 p-2 rounded-md hover:bg-[#1a1a1a] cursor-pointer group transition">
+                        <div class="w-12 h-12 bg-gradient-to-br from-indigo-700 to-emerald-400 rounded flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-heart text-white text-lg"></i>
+                        </div>
+                        <div class="truncate">
+                            <p class="text-white text-sm font-medium truncate">Músicas Curtidas</p>
+                            <p class="text-[#b3b3b3] text-xs flex items-center gap-1">
+                                <i class="fa-solid fa-thumbtack text-[#1db954] text-[10px]"></i> Playlist • <span id="liked-count">12 músicas</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Playlist Items generated by JS or static previews -->
+                    <div class="flex items-center gap-3 p-2 rounded-md hover:bg-[#1a1a1a] cursor-pointer group transition">
+                        <img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=100&auto=format&fit=crop&q=80" class="w-12 h-12 rounded object-cover shrink-0" alt="Playlist cover">
+                        <div class="truncate">
+                            <p class="text-white text-sm font-medium truncate">Top Brasil 2026</p>
+                            <p class="text-[#b3b3b3] text-xs truncate">Playlist • Spotify</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3 p-2 rounded-md hover:bg-[#1a1a1a] cursor-pointer group transition">
+                        <img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=100&auto=format&fit=crop&q=80" class="w-12 h-12 rounded object-cover shrink-0" alt="Playlist cover">
+                        <div class="truncate">
+                            <p class="text-white text-sm font-medium truncate">Lofi Vibes & Chill</p>
+                            <p class="text-[#b3b3b3] text-xs truncate">Playlist • User</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3 p-2 rounded-md hover:bg-[#1a1a1a] cursor-pointer group transition">
+                        <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=100&auto=format&fit=crop&q=80" class="w-12 h-12 rounded object-cover shrink-0" alt="Artist cover">
+                        <div class="truncate">
+                            <p class="text-white text-sm font-medium truncate">The Weeknd</p>
+                            <p class="text-[#b3b3b3] text-xs truncate">Artista</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3 p-2 rounded-md hover:bg-[#1a1a1a] cursor-pointer group transition">
+                        <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=100&auto=format&fit=crop&q=80" class="w-12 h-12 rounded object-cover shrink-0" alt="Playlist cover">
+                        <div class="truncate">
+                            <p class="text-white text-sm font-medium truncate">Rock Classics 80s</p>
+                            <p class="text-[#b3b3b3] text-xs truncate">Playlist • Spotify</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </aside>
+
+        <!-- ================= MAIN CONTENT AREA ================= -->
+        <main class="flex-1 bg-[#121212] rounded-lg overflow-y-auto relative flex flex-col min-w-0" id="main-view">
+            
+            <!-- Sticky Header -->
+            <header class="sticky top-0 z-40 bg-[#121212]/90 backdrop-blur-md px-6 py-4 flex items-center justify-between gap-4 sticky-header">
+                <!-- Navigation Arrows & Search Input -->
+                <div class="flex items-center gap-4 flex-1">
+                    <div class="flex items-center gap-2">
+                        <button class="w-8 h-8 rounded-full bg-black/60 flex items-center justify-center text-white/70 hover:text-white cursor-pointer transition">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+                        <button class="w-8 h-8 rounded-full bg-black/60 flex items-center justify-center text-white/70 hover:text-white cursor-pointer transition">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                    </div>
+
+                    <!-- Functional Dynamic Search Bar -->
+                    <div class="relative max-w-md w-full">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-[#b3b3b3] text-sm"></i>
+                        <input type="text" id="search-input" placeholder="O que você quer ouvir?" 
+                            class="w-full bg-[#242424] text-white text-sm rounded-full pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-white/20 border border-transparent placeholder-[#757575] transition">
+                    </div>
+                </div>
+
+                <!-- User Profile & Action Pill -->
+                <div class="flex items-center gap-3 shrink-0">
+                    <button class="bg-white text-black font-bold text-xs px-4 py-2 rounded-full hover:scale-105 transition hidden sm:block">
+                        Ver Premium
+                    </button>
+                    <button class="bg-black/60 text-white font-semibold text-xs px-3 py-2 rounded-full hover:scale-105 transition flex items-center gap-2">
+                        <i class="fa-regular fa-circle-down"></i>
+                        <span>Instalar aplicativo</span>
+                    </button>
+                    <button class="w-9 h-9 rounded-full bg-black flex items-center justify-center border-2 border-transparent hover:scale-105 transition text-white font-bold text-sm bg-gradient-to-tr from-emerald-500 to-indigo-600">
+                        U
+                    </button>
+                </div>
+            </header>
+
+            <!-- Main Scrollable Content -->
+            <div class="p-6 space-y-8">
+                
+                <!-- Greetings Header Section -->
+                <div>
+                    <h1 class="text-3xl font-bold mb-4 tracking-tight" id="greeting-text">Boa tarde</h1>
+                    
+                    <!-- Top Quick Grid (2 Cols / 4 Cols) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" id="quick-grid">
+                        <!-- Quick items injected dynamically or rendered -->
+                    </div>
+                </div>
+
+                <!-- Section 1: Feito para Você -->
+                <section>
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-2xl font-bold tracking-tight hover:underline cursor-pointer">Feito para você</h2>
+                        <span class="text-xs font-bold text-[#b3b3b3] hover:underline cursor-pointer tracking-wider uppercase">Mostrar tudo</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4" id="cards-container-1">
+                        <!-- Cards dynamically rendered by JS -->
+                    </div>
+                </section>
+
+                <!-- Section 2: Tocadas Recentemente -->
+                <section>
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-2xl font-bold tracking-tight hover:underline cursor-pointer">Tocadas recentemente</h2>
+                        <span class="text-xs font-bold text-[#b3b3b3] hover:underline cursor-pointer tracking-wider uppercase">Mostrar tudo</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4" id="cards-container-2">
+                        <!-- Cards dynamically rendered by JS -->
+                    </div>
+                </section>
+
+                <!-- Section 3: Estações em alta -->
+                <section class="pb-10">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-2xl font-bold tracking-tight hover:underline cursor-pointer">Recomendado para hoje</h2>
+                        <span class="text-xs font-bold text-[#b3b3b3] hover:underline cursor-pointer tracking-wider uppercase">Mostrar tudo</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4" id="cards-container-3">
+                        <!-- Cards dynamically rendered by JS -->
+                    </div>
+                </section>
+
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ================= FOOTER PLAYER BAR (FIXO) ================= -->
+    <footer class="h-20 bg-black px-4 flex items-center justify-between z-50 rounded-lg shrink-0 select-none">
+        
+        <!-- Left: Track Details -->
+        <div class="flex items-center gap-3 w-1/4 min-w-[180px]">
+            <img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=100&auto=format&fit=crop&q=80" 
+                 id="player-album-art" 
+                 class="w-14 h-14 rounded object-cover shadow" 
+                 alt="Current Album Art">
+            <div class="truncate">
+                <p class="text-white text-sm font-medium hover:underline cursor-pointer truncate" id="player-track-title">Blinding Lights</p>
+                <p class="text-[#b3b3b3] text-xs hover:underline cursor-pointer truncate" id="player-track-artist">The Weeknd</p>
+            </div>
+            <button class="text-[#b3b3b3] hover:text-white transition ml-2" id="like-btn" title="Curtir">
+                <i class="fa-regular fa-heart text-base"></i>
+            </button>
+        </div>
+
+        <!-- Center: Media Controls & Progress Bar -->
+        <div class="flex flex-col items-center gap-1.5 w-2/4 max-w-[722px]">
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-5 text-[#b3b3b3]">
+                <button class="hover:text-white transition text-sm" id="shuffle-btn" title="Ordem aleatória">
+                    <i class="fa-solid fa-shuffle"></i>
+                </button>
+                <button class="hover:text-white transition text-lg" id="prev-btn" title="Anterior">
+                    <i class="fa-solid fa-backward-step"></i>
+                </button>
+                <button class="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 transition shadow" id="play-pause-btn" title="Reproduzir">
+                    <i class="fa-solid fa-play text-sm translate-x-[1px]" id="play-icon"></i>
+                </button>
+                <button class="hover:text-white transition text-lg" id="next-btn" title="Próximo">
+                    <i class="fa-solid fa-forward-step"></i>
+                </button>
+                <button class="hover:text-white transition text-sm" id="repeat-btn" title="Repetir">
+                    <i class="fa-solid fa-repeat"></i>
+                </button>
+            </div>
+
+            <!-- Time & Slider -->
+            <div class="flex items-center gap-2 w-full text-xs text-[#b3b3b3] range-container">
+                <span id="current-time">0:00</span>
+                <input type="range" id="progress-bar" min="0" max="100" value="0" class="w-full cursor-pointer">
+                <span id="total-duration">0:00</span>
+            </div>
+        </div>
+
+        <!-- Right: Extra Controls & Volume -->
+        <div class="flex items-center justify-end gap-3 w-1/4 min-w-[180px] text-[#b3b3b3]">
+            <button class="hover:text-white transition text-sm" title="Tocando agora"><i class="fa-solid fa-circle-play"></i></button>
+            <button class="hover:text-white transition text-sm" title="Letras"><i class="fa-solid fa-microphone"></i></button>
+            <button class="hover:text-white transition text-sm" title="Fila"><i class="fa-solid fa-layer-group"></i></button>
+            <button class="hover:text-white transition text-sm" title="Conectar a um dispositivo"><i class="fa-solid fa-desktop"></i></button>
+            
+            <!-- Volume Slider Container -->
+            <div class="flex items-center gap-2 range-container">
+                <button class="hover:text-white transition text-sm" id="volume-icon">
+                    <i class="fa-solid fa-volume-high"></i>
+                </button>
+                <input type="range" id="volume-bar" min="0" max="100" value="80" class="w-20 cursor-pointer">
+            </div>
+        </div>
+
+    </footer>
+
+    <!-- ================= JAVASCRIPT APPLICATION LOGIC ================= -->
+    <script>
+        
+        // Mock Song Data with Real SoundHelix royalty free previews
+        const songsData = [
+            {
+                id: 1,
+                title: "Blinding Lights",
+                artist: "The Weeknd",
+                album: "After Hours",
+                cover: "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=400&auto=format&fit=crop&q=80",
+                audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+            },
+            {
+                id: 2,
+                title: "Starboy",
+                artist: "The Weeknd, Daft Punk",
+                album: "Starboy",
+                cover: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400&auto=format&fit=crop&q=80",
+                audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"
+            },
+            {
+                id: 3,
+                title: "As It Was",
+                artist: "Harry Styles",
+                album: "Harry's House",
+                cover: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400&auto=format&fit=crop&q=80",
+                audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"
+            },
+            {
+                id: 4,
+                title: "Flowers",
+                artist: "Miley Cyrus",
+                album: "Endless Summer Vacation",
+                cover: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&auto=format&fit=crop&q=80",
+                audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3"
+            },
+            {
+                id: 5,
+                title: "Levitating",
+                artist: "Dua Lipa",
+                album: "Future Nostalgia",
+                cover: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&auto=format&fit=crop&q=80",
+                audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3"
+            },
+            {
+                id: 6,
+                title: "Cold Heart (PNAU Remix)",
+                artist: "Elton John, Dua Lipa",
+                album: "The Lockdown Sessions",
+                cover: "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400&auto=format&fit=crop&q=80",
+                audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3"
+            },
+            {
+                id: 7,
+                title: "Save Your Tears",
+                artist: "The Weeknd",
+                album: "After Hours",
+                cover: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400&auto=format&fit=crop&q=80",
+                audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3"
+            },
+            {
+                id: 8,
+                title: "Stay",
+                artist: "The Kid LAROI, Justin Bieber",
+                album: "F*CK LOVE 3",
+                cover: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=400&auto=format&fit=crop&q=80",
+                audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-16.mp3"
+            }
+        ];
+
+        // State Variables
+        let currentTrackIndex = 0;
+        let isPlaying = false;
+        let isLiked = false;
+        let isShuffle = false;
+        let isRepeat = false;
+
+        // DOM Elements
+        const audio = document.getElementById('main-audio');
+        const playPauseBtn = document.getElementById('play-pause-btn');
+        const playIcon = document.getElementById('play-icon');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const shuffleBtn = document.getElementById('shuffle-btn');
+        const repeatBtn = document.getElementById('repeat-btn');
+        const progressBar = document.getElementById('progress-bar');
+        const currentTimeEl = document.getElementById('current-time');
+        const totalDurationEl = document.getElementById('total-duration');
+        const volumeBar = document.getElementById('volume-bar');
+        const volumeIcon = document.getElementById('volume-icon');
+        const likeBtn = document.getElementById('like-btn');
+
+        const playerAlbumArt = document.getElementById('player-album-art');
+        const playerTrackTitle = document.getElementById('player-track-title');
+        const playerTrackArtist = document.getElementById('player-track-artist');
+
+        const greetingText = document.getElementById('greeting-text');
+        const searchInput = document.getElementById('search-input');
+
+        
+        // Dynamic Time Greeting
+        function updateGreeting() {
+            const hour = new Date().getHours();
+            if (hour >= 5 && hour < 12) {
+                greetingText.innerText = 'Bom dia';
+            } else if (hour >= 12 && hour < 18) {
+                greetingText.innerText = 'Boa tarde';
+            } else {
+                greetingText.innerText = 'Boa noite';
+            }
+        }
+
+        // Render Top Quick Grid (First 6 songs)
+        function renderQuickGrid() {
+            const container = document.getElementById('quick-grid');
+            container.innerHTML = '';
+
+            songsData.slice(0, 6).forEach((song, index) => {
+                const card = document.createElement('div');
+                card.className = 'bg-[#ffffff0d] hover:bg-[#ffffff1f] transition-all rounded overflow-hidden flex items-center gap-4 cursor-pointer group relative shadow-md';
+                card.onclick = () => playSongAtIndex(index);
+
+                card.innerHTML = `
+                    <img src="${song.cover}" class="w-16 h-16 object-cover" alt="${song.title}">
+                    <span class="font-bold text-sm text-white truncate flex-1 pr-2">${song.title}</span>
+                    <button class="w-10 h-10 rounded-full bg-[#1db954] text-black flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-1 group-hover:translate-y-0 mr-4 shrink-0">
+                        <i class="fa-solid fa-play text-sm translate-x-[1px]"></i>
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Render Vertical Standard Spotify Cards
+        function renderCardContainer(containerId, songsList) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+
+            songsList.forEach((song) => {
+                const globalIndex = songsData.findIndex(s => s.id === song.id);
+                const card = document.createElement('div');
+                card.className = 'bg-[#181818] hover:bg-[#282828] p-4 rounded-md spotify-card cursor-pointer group transition duration-300';
+                card.onclick = () => playSongAtIndex(globalIndex);
+
+                card.innerHTML = `
+                    <div class="relative mb-4">
+                        <img src="${song.cover}" class="w-full aspect-square object-cover rounded-md shadow-lg" alt="${song.title}">
+                        <button class="play-btn absolute right-2 bottom-2 w-12 h-12 rounded-full bg-[#1db954] text-black flex items-center justify-center shadow-2xl hover:scale-105 transition-all">
+                            <i class="fa-solid fa-play text-base translate-x-[1px]"></i>
+                        </button>
+                    </div>
+                    <h3 class="text-white font-bold text-sm truncate mb-1">${song.title}</h3>
+                    <p class="text-[#b3b3b3] text-xs truncate font-medium">${song.artist}</p>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+
+        // Load Track Logic
+        function loadTrack(index) {
+            currentTrackIndex = index;
+            const song = songsData[currentTrackIndex];
+
+            audio.src = song.audioUrl;
+            playerAlbumArt.src = song.cover;
+            playerTrackTitle.innerText = song.title;
+            playerTrackArtist.innerText = song.artist;
+
+            // Reset progress
+            progressBar.value = 0;
+            currentTimeEl.innerText = '0:00';
+            totalDurationEl.innerText = '0:00';
+        }
+
+        // Play/Pause Toggle
+        function togglePlayPause() {
+            if (isPlaying) {
+                pauseSong();
+            } else {
+                playSong();
+            }
+        }
+
+        function playSong() {
+            isPlaying = true;
+            audio.play();
+            playIcon.classList.remove('fa-play');
+            playIcon.classList.add('fa-pause');
+            playIcon.classList.remove('translate-x-[1px]');
+        }
+
+        function pauseSong() {
+            isPlaying = false;
+            audio.pause();
+            playIcon.classList.remove('fa-pause');
+            playIcon.classList.add('fa-play');
+            playIcon.classList.add('translate-x-[1px]');
+        }
+
+        function playSongAtIndex(index) {
+            loadTrack(index);
+            playSong();
+        }
+
+        function nextTrack() {
+            if (isShuffle) {
+                currentTrackIndex = Math.floor(Math.random() * songsData.length);
+            } else {
+                currentTrackIndex = (currentTrackIndex + 1) % songsData.length;
+            }
+            playSongAtIndex(currentTrackIndex);
+        }
+
+        function prevTrack() {
+            currentTrackIndex = (currentTrackIndex - 1 + songsData.length) % songsData.length;
+            playSongAtIndex(currentTrackIndex);
+        }
+
+        // Format Seconds to MM:SS
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '0:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+
+
+        // Update Progress Bar as Audio Plays
+        audio.addEventListener('timeupdate', () => {
+            if (audio.duration) {
+                const progressPercent = (audio.currentTime / audio.duration) * 100;
+                progressBar.value = progressPercent;
+                currentTimeEl.innerText = formatTime(audio.currentTime);
+                totalDurationEl.innerText = formatTime(audio.duration);
+            }
+        });
+
+        // Seek Audio on Slider Drag
+        progressBar.addEventListener('input', () => {
+            if (audio.duration) {
+                const seekTime = (progressBar.value / 100) * audio.duration;
+                audio.currentTime = seekTime;
+            }
+        });
+
+        // Volume Control
+        volumeBar.addEventListener('input', (e) => {
+            const vol = e.target.value / 100;
+            audio.volume = vol;
+            if (vol === 0) {
+                volumeIcon.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+            } else if (vol < 0.5) {
+                volumeIcon.innerHTML = '<i class="fa-solid fa-volume-low"></i>';
+            } else {
+                volumeIcon.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+            }
+        });
+
+        // Auto Next on Song End
+        audio.addEventListener('ended', () => {
+            if (isRepeat) {
+                playSong();
+            } else {
+                nextTrack();
+            }
+        });
+
+        // Toggle Like Heart Button
+        likeBtn.addEventListener('click', () => {
+            isLiked = !isLiked;
+            const heartIcon = likeBtn.querySelector('i');
+            if (isLiked) {
+                heartIcon.className = 'fa-solid fa-heart text-[#1db954] text-base';
+            } else {
+                heartIcon.className = 'fa-regular fa-heart text-[#b3b3b3] text-base';
+            }
+        });
+
+        // Shuffle & Repeat Toggle Visuals
+        shuffleBtn.addEventListener('click', () => {
+            isShuffle = !isShuffle;
+            shuffleBtn.classList.toggle('text-[#1db954]', isShuffle);
+            shuffleBtn.classList.toggle('text-[#b3b3b3]', !isShuffle);
+        });
+
+        repeatBtn.addEventListener('click', () => {
+            isRepeat = !isRepeat;
+            repeatBtn.classList.toggle('text-[#1db954]', isRepeat);
+            repeatBtn.classList.toggle('text-[#b3b3b3]', !isRepeat);
+        });
+
+        // Buttons Event Listeners
+        playPauseBtn.addEventListener('click', togglePlayPause);
+        nextBtn.addEventListener('click', nextTrack);
+        prevBtn.addEventListener('click', prevTrack);
+
+        // Search Input Interactive Filter
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            const filteredSongs = songsData.filter(s => 
+                s.title.toLowerCase().includes(query) || 
+                s.artist.toLowerCase().includes(query) ||
+                s.album.toLowerCase().includes(query)
+            );
+
+            renderCardContainer('cards-container-1', filteredSongs);
+            renderCardContainer('cards-container-2', filteredSongs.slice().reverse());
+        });
+
+        window.onload = () => {
+            updateGreeting();
+            renderQuickGrid();
+            renderCardContainer('cards-container-1', songsData);
+            renderCardContainer('cards-container-2', songsData.slice().reverse());
+            renderCardContainer('cards-container-3', songsData.slice(2, 7));
+
+            // Load Initial Song (Blinding Lights)
+            loadTrack(0);
+        };
+    </script>
+</body>
+</html>

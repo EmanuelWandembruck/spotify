@@ -1,0 +1,474 @@
+/* ==========================================================================
+   1. VARIÁVEIS DE DESIGN DO SPOTIFY
+   ========================================================================== */
+:root {
+  --bg-base: #121212;
+  --bg-surface: #181818;
+  --bg-highlight: #282828;
+  --bg-elevated: #242424;
+  
+  --text-base: #ffffff;
+  --text-subdued: #a7a7a7;
+  
+  --spotify-green: #1db954;
+  --spotify-green-hover: #1ed760;
+  
+  --sidebar-width: 280px;
+  --player-height: 90px;
+  --border-radius: 8px;
+}
+
+/* ==========================================================================
+   2. RESET E CONFIGURAÇÕES GERAIS
+   ========================================================================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  background-color: #000000;
+  color: var(--text-base);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Barra de rolagem personalizada estilo Spotify */
+::-webkit-scrollbar {
+  width: 12px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* ==========================================================================
+   3. LAYOUT PRINCIPAL (CONTAINER)
+   ========================================================================== */
+.app-container {
+  display: flex;
+  flex: 1;
+  height: calc(100vh - var(--player-height));
+  padding: 8px;
+  gap: 8px;
+}
+
+/* ==========================================================================
+   4. BARRA LATERAL (SIDEBAR)
+   ========================================================================== */
+.sidebar {
+  width: var(--sidebar-width);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebar-nav,
+.sidebar-library {
+  background-color: var(--bg-base);
+  border-radius: var(--border-radius);
+  padding: 16px;
+}
+
+.sidebar-nav ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sidebar-nav a {
+  text-decoration: none;
+  color: var(--text-subdued);
+  font-weight: 700;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: color 0.2s ease;
+}
+
+.sidebar-nav a:hover,
+.sidebar-nav a.active {
+  color: var(--text-base);
+}
+
+.sidebar-library {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.library-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--text-subdued);
+  margin-bottom: 16px;
+}
+
+.library-header:hover {
+  color: var(--text-base);
+  cursor: pointer;
+}
+
+.playlist-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.playlist-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.playlist-item:hover {
+  background-color: var(--bg-surface);
+}
+
+.playlist-img {
+  width: 48px;
+  height: 48px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.playlist-info h4 {
+  font-size: 0.9rem;
+  color: var(--text-base);
+}
+
+.playlist-info p {
+  font-size: 0.8rem;
+  color: var(--text-subdued);
+}
+
+/* ==========================================================================
+   5. ÁREA DE CONTEÚDO PRINCIPAL (MAIN CONTENT)
+   ========================================================================== */
+.main-content {
+  flex: 1;
+  background-color: var(--bg-base);
+  border-radius: var(--border-radius);
+  overflow-y: auto;
+  padding: 24px;
+  background: linear-gradient(180deg, #222222 0%, var(--bg-base) 300px);
+}
+
+/* Cabeçalho superior */
+.top-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.nav-buttons button {
+  background-color: rgba(0, 0, 0, 0.7);
+  border: none;
+  color: var(--text-base);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  margin-right: 8px;
+}
+
+.user-profile {
+  background-color: rgba(0, 0, 0, 0.7);
+  border-radius: 20px;
+  padding: 4px 12px 4px 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+}
+
+/* Seções e Grids de Cards */
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+/* Card de Álbum / Playlist */
+.card {
+  background-color: var(--bg-surface);
+  padding: 16px;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+  position: relative;
+  cursor: pointer;
+}
+
+.card:hover {
+  background-color: var(--bg-highlight);
+}
+
+.card-image-wrapper {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.card-img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* Botão de Play Verde flutuante nos cards */
+.play-btn-floating {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  width: 48px;
+  height: 48px;
+  background-color: var(--spotify-green);
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+
+.play-btn-floating:hover {
+  transform: scale(1.05) translateY(0) !important;
+  background-color: var(--spotify-green-hover);
+}
+
+.card:hover .play-btn-floating {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.card-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-description {
+  font-size: 0.85rem;
+  color: var(--text-subdued);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.3;
+}
+
+/* ==========================================================================
+   6. PLAYER DE ÁUDIO INFERIOR (BOTTOM PLAYER)
+   ========================================================================== */
+.player-bar {
+  height: var(--player-height);
+  background-color: #000000;
+  border-top: 1px solid #282828;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  position: relative;
+  z-index: 10;
+}
+
+/* Lado Esquerdo: Info da música atual */
+.now-playing {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 30%;
+  min-width: 180px;
+}
+
+.now-playing-img {
+  width: 56px;
+  height: 56px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.now-playing-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.now-playing-artist {
+  font-size: 0.75rem;
+  color: var(--text-subdued);
+}
+
+.like-btn {
+  background: none;
+  border: none;
+  color: var(--text-subdued);
+  cursor: pointer;
+}
+
+.like-btn:hover {
+  color: var(--text-base);
+}
+
+/* Centro: Controles de Reprodução e Progresso */
+.player-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 40%;
+  max-width: 722px;
+}
+
+.control-buttons {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.btn-control {
+  background: none;
+  border: none;
+  color: var(--text-subdued);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.btn-control:hover {
+  color: var(--text-base);
+}
+
+.btn-play-pause {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--text-base);
+  color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.btn-play-pause:hover {
+  transform: scale(1.06);
+}
+
+/* Barra de Progresso */
+.progress-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.time-stamp {
+  font-size: 0.75rem;
+  color: var(--text-subdued);
+  min-width: 35px;
+  text-align: center;
+}
+
+.progress-bar, .volume-bar {
+  flex: 1;
+  height: 4px;
+  background-color: #4d4d4d;
+  border-radius: 2px;
+  position: relative;
+  cursor: pointer;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 30%; /* Alterado dinamicamente via JS */
+  background-color: var(--text-base);
+  border-radius: 2px;
+  transition: background-color 0.2s ease;
+}
+
+.progress-bar:hover .progress-fill {
+  background-color: var(--spotify-green);
+}
+
+/* Lado Direito: Volume e Outras Opções */
+.player-extra-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  width: 30%;
+  min-width: 180px;
+}
+
+.volume-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 120px;
+}
+
+/* ==========================================================================
+   7. RESPONSIVIDADE
+   ========================================================================== */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 70px;
+  }
+  
+  .sidebar span, 
+  .library-header span,
+  .playlist-info {
+    display: none;
+  }
+  
+  .cards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+}
